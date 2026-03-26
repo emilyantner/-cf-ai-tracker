@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PILLARS, ACTIONS } from "@/lib/data";
 import type { StatusKey, Pillar, Task, Action } from "@/lib/data";
 
@@ -125,6 +125,7 @@ export default function Dashboard() {
   const [uploadMode, setUploadMode]       = useState<"analyze" | "reference" | null>(null);
   const [references, setReferences]       = useState<ReferenceDoc[]>([]);
   const [expandedRef, setExpandedRef]     = useState<number | null>(null);
+  const [flagInsight, setFlagInsight]     = useState<string | null>(null);
   const fileInputRef                       = useRef<HTMLInputElement>(null);
 
   function updateTask(pillarId: string, taskId: number, patch: Partial<Task>) {
@@ -231,6 +232,25 @@ export default function Dashboard() {
   const flaggedActions = actions.filter(a => a.status === "Blocked" || a.status === "At Risk");
   const hasFlagged     = flaggedTasks.length > 0 || flaggedActions.length > 0;
 
+  // Regenerate flag insight whenever the set of flagged items changes
+  const flagKey = [...flaggedTasks.map(t => `${t.id}:${t.status}`), ...flaggedActions.map(a => `a${a.id}:${a.status}`)].join(",");
+  useEffect(() => {
+    if (!hasFlagged) { setFlagInsight(null); return; }
+    setFlagInsight(null); // clear while loading
+    fetch("/api/flag-insight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tasks:   flaggedTasks.map(t => ({ task: t.task, status: t.status, pillar: t.pillarLabel })),
+        actions: flaggedActions.map(a => ({ task: a.task, status: a.status })),
+      }),
+    })
+      .then(r => r.json())
+      .then((d: { insight?: string }) => setFlagInsight(d.insight ?? null))
+      .catch(() => setFlagInsight(null));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flagKey]);
+
   const groupedActions = STATUS_ORDER
     .map(s => ({ status: s, items: actions.filter(a => a.status === s) }))
     .filter(g => g.items.length > 0);
@@ -305,29 +325,19 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Flag banner — high-level summary */}
-      {hasFlagged && (() => {
-        const blockedCount  = flaggedTasks.filter(t => t.status === "Blocked").length  + flaggedActions.filter(a => a.status === "Blocked").length;
-        const atRiskCount   = flaggedTasks.filter(t => t.status === "At Risk").length  + flaggedActions.filter(a => a.status === "At Risk").length;
-        const affectedPillars = [...new Set(flaggedTasks.map(t => t.pillarLabel))];
-        const parts: string[] = [];
-        if (blockedCount > 0) parts.push(`${blockedCount} blocked`);
-        if (atRiskCount  > 0) parts.push(`${atRiskCount} at risk`);
-        const summary = parts.join(", ");
-        const scope   = affectedPillars.length > 0
-          ? ` across ${affectedPillars.length === 1 ? affectedPillars[0] : affectedPillars.length + " workstreams"}`
-          : flaggedActions.length > 0 ? " in open actions" : "";
-        return (
-          <div
-            onClick={() => goToFilter(["At Risk", "Blocked"])}
-            style={{ background: "#FCEBEB", border: "0.5px solid #F09595", borderRadius: 10, padding: "10px 16px", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#A32D2D", whiteSpace: "nowrap", fontFamily: "var(--font-heading)" }}>Flag</span>
-            <span style={{ fontSize: 13, color: "#A32D2D", flex: 1 }}>{summary}{scope} — review before next check-in</span>
-            <span style={{ fontSize: 11, color: "#A32D2D", opacity: 0.6, whiteSpace: "nowrap" }}>view →</span>
-          </div>
-        );
-      })()}
+      {/* Flag banner — AI-synthesized insight */}
+      {hasFlagged && (
+        <div
+          onClick={() => goToFilter(["At Risk", "Blocked"])}
+          style={{ background: "#FCEBEB", border: "0.5px solid #F09595", borderRadius: 10, padding: "10px 16px", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
+        >
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#A32D2D", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.07em", fontFamily: "var(--font-heading)" }}>Flag</span>
+          <span style={{ fontSize: 13, color: "#A32D2D", flex: 1 }}>
+            {flagInsight ?? <span style={{ opacity: 0.45 }}>Analyzing…</span>}
+          </span>
+          <span style={{ fontSize: 11, color: "#A32D2D", opacity: 0.5, whiteSpace: "nowrap" }}>view →</span>
+        </div>
+      )}
 
       {/* Recommended check-ins */}
       <div style={{ background: "var(--color-background-secondary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 10, padding: "12px 16px", marginBottom: "1.25rem" }}>
