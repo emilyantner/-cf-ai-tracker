@@ -305,28 +305,29 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Flag banner — dynamic */}
-      {hasFlagged && (
-        <div style={{ background: "#FCEBEB", border: "0.5px solid #F09595", borderRadius: 10, padding: "10px 16px", marginBottom: "0.75rem", fontSize: 13, color: "#A32D2D" }}>
-          <div style={{ fontWeight: 500, marginBottom: 6 }}>Flag:</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {flaggedTasks.map(t => (
-              <div key={`task-${t.id}`} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, background: STATUS[t.status].bg, color: STATUS[t.status].text, padding: "1px 7px", borderRadius: 20, fontWeight: 500, whiteSpace: "nowrap" }}>{t.status}</span>
-                <span style={{ fontSize: 11, opacity: 0.7, whiteSpace: "nowrap" }}>{t.pillarLabel}</span>
-                <span>{t.task}</span>
-              </div>
-            ))}
-            {flaggedActions.map(a => (
-              <div key={`action-${a.id}`} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, background: STATUS[a.status].bg, color: STATUS[a.status].text, padding: "1px 7px", borderRadius: 20, fontWeight: 500, whiteSpace: "nowrap" }}>{a.status}</span>
-                <span style={{ fontSize: 11, opacity: 0.7, whiteSpace: "nowrap" }}>Action</span>
-                <span>{a.task}</span>
-              </div>
-            ))}
+      {/* Flag banner — high-level summary */}
+      {hasFlagged && (() => {
+        const blockedCount  = flaggedTasks.filter(t => t.status === "Blocked").length  + flaggedActions.filter(a => a.status === "Blocked").length;
+        const atRiskCount   = flaggedTasks.filter(t => t.status === "At Risk").length  + flaggedActions.filter(a => a.status === "At Risk").length;
+        const affectedPillars = [...new Set(flaggedTasks.map(t => t.pillarLabel))];
+        const parts: string[] = [];
+        if (blockedCount > 0) parts.push(`${blockedCount} blocked`);
+        if (atRiskCount  > 0) parts.push(`${atRiskCount} at risk`);
+        const summary = parts.join(", ");
+        const scope   = affectedPillars.length > 0
+          ? ` across ${affectedPillars.length === 1 ? affectedPillars[0] : affectedPillars.length + " workstreams"}`
+          : flaggedActions.length > 0 ? " in open actions" : "";
+        return (
+          <div
+            onClick={() => goToFilter(["At Risk", "Blocked"])}
+            style={{ background: "#FCEBEB", border: "0.5px solid #F09595", borderRadius: 10, padding: "10px 16px", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#A32D2D", whiteSpace: "nowrap", fontFamily: "var(--font-heading)" }}>Flag</span>
+            <span style={{ fontSize: 13, color: "#A32D2D", flex: 1 }}>{summary}{scope} — review before next check-in</span>
+            <span style={{ fontSize: 11, color: "#A32D2D", opacity: 0.6, whiteSpace: "nowrap" }}>view →</span>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Recommended check-ins */}
       <div style={{ background: "var(--color-background-secondary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 10, padding: "12px 16px", marginBottom: "1.25rem" }}>
