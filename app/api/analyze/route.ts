@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import pdfParse from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
 import mammoth from "mammoth";
 import { PILLARS, ACTIONS } from "@/lib/data";
 
