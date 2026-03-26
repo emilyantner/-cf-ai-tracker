@@ -271,7 +271,7 @@ export default function Dashboard() {
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
             <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: "none" }} onChange={handleFileUpload} />
             <button
-              onClick={() => setShowUploadPicker(p => !p)}
+              onClick={e => { e.stopPropagation(); setShowUploadPicker(p => !p); }}
               disabled={uploadState === "loading"}
               style={{ fontSize: 11, padding: "4px 12px", borderRadius: 20, border: "none", background: "var(--color-brand-red)", color: "#ffffff", cursor: uploadState === "loading" ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 500 }}
             >
