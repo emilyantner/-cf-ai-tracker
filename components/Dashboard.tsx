@@ -240,20 +240,20 @@ export default function Dashboard() {
     : [];
 
   return (
-    <div style={{ fontFamily: "var(--font-sans)", padding: "1.5rem 1rem", color: "var(--color-text-primary)", maxWidth: 1000 }} onClick={() => setShowUploadPicker(false)}>
+    <div style={{ fontFamily: "var(--font-sans)", padding: "1.5rem 1rem", color: "var(--color-text-primary)", maxWidth: 1000, margin: "0 auto" }} onClick={() => setShowUploadPicker(false)}>
 
       {/* Header */}
       <div style={{ marginBottom: "1.5rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
-          <h1 style={{ fontSize: 21, fontWeight: 500, margin: 0 }}>AI Initiatives Tracker</h1>
-          <span style={{ fontSize: 11, color: "var(--color-text-secondary)", background: "var(--color-background-secondary)", padding: "2px 10px", borderRadius: 20, border: "0.5px solid var(--color-border-tertiary)" }}>Channel Factory</span>
+          <h1 style={{ fontSize: 21, fontWeight: 600, margin: 0, fontFamily: "var(--font-heading)", color: "var(--color-brand-navy)" }}>AI Initiatives Tracker</h1>
+          <span style={{ fontSize: 11, color: "#ffffff", background: "var(--color-brand-navy)", padding: "2px 10px", borderRadius: 20 }}>Channel Factory</span>
           <span style={{ fontSize: 11, color: "#854F0B", background: "#FAEEDA", padding: "2px 10px", borderRadius: 20 }}>Mar 25, 2026</span>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
             <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: "none" }} onChange={handleFileUpload} />
             <button
               onClick={() => setShowUploadPicker(p => !p)}
               disabled={uploadState === "loading"}
-              style={{ fontSize: 11, padding: "4px 12px", borderRadius: 20, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-secondary)", cursor: uploadState === "loading" ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+              style={{ fontSize: 11, padding: "4px 12px", borderRadius: 20, border: "none", background: "var(--color-brand-red)", color: "#ffffff", cursor: uploadState === "loading" ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 500 }}
             >
               {uploadState === "loading" ? "Uploading…" : "Upload"}
             </button>
@@ -330,7 +330,7 @@ export default function Dashboard() {
 
       {/* Recommended check-ins */}
       <div style={{ background: "var(--color-background-secondary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 10, padding: "12px 16px", marginBottom: "1.25rem" }}>
-        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Recommended check-ins</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--color-brand-navy)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.07em", fontFamily: "var(--font-heading)" }}>Recommended check-ins</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
           {[
             { who: "Anudit",       note: "Confirm internal tech roadmap was sent to Rod (Tony asked Mar 24, roundtable managers only)", due: "Today" },
@@ -350,7 +350,7 @@ export default function Dashboard() {
       <div style={{ display: "flex", gap: 4, borderBottom: "0.5px solid var(--color-border-tertiary)", marginBottom: "1.5rem" }}>
         {["overview", "actions", "narrative", "references"].map((t) => (
           <button key={t} onClick={() => { setActiveTab(t); setActivePillar(null); setStatusFilter(null); setShowUploadPicker(false); }}
-            style={{ fontSize: 12, fontWeight: activeTab === t ? 500 : 400, padding: "8px 14px", background: "transparent", border: "none", borderBottom: activeTab === t ? "2px solid var(--color-text-primary)" : "2px solid transparent", cursor: "pointer", color: activeTab === t ? "var(--color-text-primary)" : "var(--color-text-secondary)", marginBottom: -1, textTransform: "capitalize" }}>
+            style={{ fontSize: 12, fontWeight: activeTab === t ? 600 : 400, padding: "8px 14px", background: "transparent", border: "none", borderBottom: activeTab === t ? "2px solid var(--color-brand-red)" : "2px solid transparent", cursor: "pointer", color: activeTab === t ? "var(--color-brand-navy)" : "var(--color-text-secondary)", marginBottom: -1, textTransform: "capitalize", fontFamily: "var(--font-heading)" }}>
             {t === "actions" ? `open actions (${actions.length})` : t === "references" && references.length > 0 ? `references (${references.length})` : t}
           </button>
         ))}
@@ -419,7 +419,7 @@ export default function Dashboard() {
             return (
               <div key={p.id} onClick={() => setActivePillar(p.id)} style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderLeft: `3px solid ${p.color}`, borderRadius: "0 10px 10px 0", padding: "14px 18px", cursor: "pointer", transition: "background 0.1s" }} onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")} onMouseLeave={e => (e.currentTarget.style.background = "var(--color-background-primary)")}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>{p.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, fontFamily: "var(--font-heading)", color: "var(--color-brand-navy)" }}>{p.label}</span>
                   <Dot s={p.status} />
                   {risk > 0 && <span style={{ fontSize: 11, background: "#FCEBEB", color: "#A32D2D", padding: "2px 8px", borderRadius: 20 }}>{risk} at risk</span>}
                   <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--color-text-secondary)" }}>Owner: {p.owner}</span>
@@ -445,7 +445,7 @@ export default function Dashboard() {
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
             <div style={{ width: 12, height: 12, borderRadius: "50%", background: pillar.color, flexShrink: 0 }} />
-            <h2 style={{ fontSize: 17, fontWeight: 500, margin: 0 }}>{pillar.label}</h2>
+            <h2 style={{ fontSize: 17, fontWeight: 600, margin: 0, fontFamily: "var(--font-heading)", color: "var(--color-brand-navy)" }}>{pillar.label}</h2>
             <Dot s={pillar.status} />
           </div>
           <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 1.25rem" }}>{pillar.description} · Owner: {pillar.owner}</p>
