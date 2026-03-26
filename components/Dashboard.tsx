@@ -460,40 +460,52 @@ export default function Dashboard() {
             <Dot s={pillar.status} />
           </div>
           <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 1.25rem" }}>{pillar.description} · Owner: {pillar.owner}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {pillar.tasks.map((t) => {
-              const isOpen = expandedTask === t.id;
-              const sc = STATUS[t.status] ?? STATUS["Not Started"];
-              return (
-                <div key={t.id} style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 10, overflow: "hidden" }}>
-                  <div onClick={() => setExpandedTask(isOpen ? null : t.id)} style={{ padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }} onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc.dot, flexShrink: 0 }} />
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 400 }}>{t.task}</span>
-                    <Dot s={t.status} />
-                    <span style={{ fontSize: 12, color: "var(--color-text-secondary)", whiteSpace: "nowrap" }}>{t.due}</span>
-                    <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{isOpen ? "▲" : "▼"}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {STATUS_ORDER
+              .map(s => ({ status: s, tasks: pillar.tasks.filter(t => t.status === s) }))
+              .filter(g => g.tasks.length > 0)
+              .map(group => (
+                <div key={group.status}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <Dot s={group.status} />
+                    <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{group.tasks.length} task{group.tasks.length !== 1 ? "s" : ""}</span>
                   </div>
-                  {isOpen && (
-                    <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--color-border-tertiary)" }}>
-                      <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Status: <StatusSelect value={t.status} onChange={v => updateTask(pillar.id, t.id, { status: v })} /></div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Owner:{" "}
-                          {editingField?.type === "task" && editingField.id === t.id && editingField.field === "owner"
-                            ? <InlineEdit value={t.owner} onCommit={v => { updateTask(pillar.id, t.id, { owner: v }); setEditingField(null); }} />
-                            : <strong style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }} onClick={e => { e.stopPropagation(); setEditingField({ type: "task", id: t.id, pillarId: pillar.id, field: "owner" }); }}>{t.owner}</strong>}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {group.tasks.map((t) => {
+                      const isOpen = expandedTask === t.id;
+                      const sc = STATUS[t.status] ?? STATUS["Not Started"];
+                      return (
+                        <div key={t.id} style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 10, overflow: "hidden" }}>
+                          <div onClick={() => setExpandedTask(isOpen ? null : t.id)} style={{ padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }} onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: sc.dot, flexShrink: 0 }} />
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 400 }}>{t.task}</span>
+                            <span style={{ fontSize: 12, color: "var(--color-text-secondary)", whiteSpace: "nowrap" }}>{t.due}</span>
+                            <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{isOpen ? "▲" : "▼"}</span>
+                          </div>
+                          {isOpen && (
+                            <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--color-border-tertiary)" }}>
+                              <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+                                <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Status: <StatusSelect value={t.status} onChange={v => updateTask(pillar.id, t.id, { status: v })} /></div>
+                                <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Owner:{" "}
+                                  {editingField?.type === "task" && editingField.id === t.id && editingField.field === "owner"
+                                    ? <InlineEdit value={t.owner} onCommit={v => { updateTask(pillar.id, t.id, { owner: v }); setEditingField(null); }} />
+                                    : <strong style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }} onClick={e => { e.stopPropagation(); setEditingField({ type: "task", id: t.id, pillarId: pillar.id, field: "owner" }); }}>{t.owner}</strong>}
+                                </div>
+                                <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Due:{" "}
+                                  {editingField?.type === "task" && editingField.id === t.id && editingField.field === "due"
+                                    ? <InlineEdit value={t.due} onCommit={v => { updateTask(pillar.id, t.id, { due: v }); setEditingField(null); }} />
+                                    : <strong style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }} onClick={e => { e.stopPropagation(); setEditingField({ type: "task", id: t.id, pillarId: pillar.id, field: "due" }); }}>{t.due}</strong>}
+                                </div>
+                              </div>
+                              <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "8px 0 0", lineHeight: 1.6 }}>{t.notes}</p>
+                            </div>
+                          )}
                         </div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Due:{" "}
-                          {editingField?.type === "task" && editingField.id === t.id && editingField.field === "due"
-                            ? <InlineEdit value={t.due} onCommit={v => { updateTask(pillar.id, t.id, { due: v }); setEditingField(null); }} />
-                            : <strong style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }} onClick={e => { e.stopPropagation(); setEditingField({ type: "task", id: t.id, pillarId: pillar.id, field: "due" }); }}>{t.due}</strong>}
-                        </div>
-                      </div>
-                      <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "8px 0 0", lineHeight: 1.6 }}>{t.notes}</p>
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
-              );
-            })}
+              ))}
           </div>
         </div>
       )}
