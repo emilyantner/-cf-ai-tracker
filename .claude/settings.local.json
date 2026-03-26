@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Read(//Users/emilyantner/**)",
+      "Read(//Users/emilyantner/Library/**)",
+      "Bash(echo $PATH)",
+      "Read(//usr/bin/**)",
+      "Bash(git --version)",
+      "Bash(git add:*)",
+      "Bash(git -C /Users/emilyantner/Documents/cf-ai-tracker status)"
+    ]
+  }
+}
