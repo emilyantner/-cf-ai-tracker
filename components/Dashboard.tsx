@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PILLARS, ACTIONS } from "@/lib/data";
-import type { StatusKey } from "@/lib/data";
+import type { StatusKey, Pillar, Task, Action } from "@/lib/data";
 
 const STATUS: Record<StatusKey, { bg: string; text: string; dot: string }> = {
   "Complete":    { bg: "#E1F5EE", text: "#0F6E56", dot: "#1D9E75" },
@@ -19,6 +19,8 @@ const prodColor: Record<string, { bg: string; text: string }> = {
   "Both":     { bg: "#F1EFE8", text: "#444441" },
 };
 
+const STATUS_ORDER: StatusKey[] = ["Blocked", "At Risk", "In Progress", "Not Started", "On Track", "Complete"];
+
 function Dot({ s }: { s: StatusKey }) {
   const c = STATUS[s] ?? STATUS["Not Started"];
   return (
@@ -29,18 +31,67 @@ function Dot({ s }: { s: StatusKey }) {
   );
 }
 
+function InlineEdit({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  const escaping = useRef(false);
+  return (
+    <input
+      autoFocus
+      value={draft}
+      onChange={e => setDraft(e.target.value)}
+      onBlur={() => { onCommit(escaping.current ? value : draft); escaping.current = false; }}
+      onKeyDown={e => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        if (e.key === "Escape") { escaping.current = true; (e.target as HTMLInputElement).blur(); }
+      }}
+      style={{
+        fontSize: "inherit", fontFamily: "inherit", fontWeight: "inherit",
+        color: "inherit", background: "var(--color-background-secondary)",
+        border: "0.5px solid var(--color-border-secondary)",
+        borderRadius: 4, padding: "1px 4px", outline: "none",
+        minWidth: 60, maxWidth: 180,
+      }}
+    />
+  );
+}
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [activePillar, setActivePillar] = useState<string | null>(null);
   const [expandedTask, setExpandedTask] = useState<number | null>(null);
+  const [pillars, setPillars] = useState<Pillar[]>(PILLARS);
+  const [actions, setActions] = useState<Action[]>(ACTIONS);
+  const [editingField, setEditingField] = useState<{
+    type: "task" | "action";
+    id: number;
+    pillarId?: string;
+    field: "owner" | "due";
+  } | null>(null);
 
-  const pillar = PILLARS.find((p) => p.id === activePillar);
+  function updateTask(pillarId: string, taskId: number, patch: Partial<Task>) {
+    setPillars(prev => prev.map(p =>
+      p.id !== pillarId ? p : {
+        ...p,
+        tasks: p.tasks.map(t => t.id !== taskId ? t : { ...t, ...patch })
+      }
+    ));
+  }
 
-  const totalTasks  = PILLARS.reduce((a, p) => a + p.tasks.length, 0);
-  const doneTasks   = PILLARS.reduce((a, p) => a + p.tasks.filter((t) => t.status === "Complete").length, 0);
-  const atRiskTasks = PILLARS.reduce((a, p) => a + p.tasks.filter((t) => t.status === "At Risk" || t.status === "Blocked").length, 0);
-  const openActions = ACTIONS.length;
+  function updateAction(actionId: number, patch: Partial<Action>) {
+    setActions(prev => prev.map(a => a.id !== actionId ? a : { ...a, ...patch }));
+  }
+
+  const pillar = pillars.find((p) => p.id === activePillar);
+
+  const totalTasks  = pillars.reduce((a, p) => a + p.tasks.length, 0);
+  const doneTasks   = pillars.reduce((a, p) => a + p.tasks.filter((t) => t.status === "Complete").length, 0);
+  const atRiskTasks = pillars.reduce((a, p) => a + p.tasks.filter((t) => t.status === "At Risk" || t.status === "Blocked").length, 0);
+  const openActions = actions.length;
   const pct = Math.round((doneTasks / totalTasks) * 100);
+
+  const groupedActions = STATUS_ORDER
+    .map(s => ({ status: s, items: actions.filter(a => a.status === s) }))
+    .filter(g => g.items.length > 0);
 
   return (
     <div style={{ fontFamily: "var(--font-sans)", padding: "1.5rem 1rem", color: "var(--color-text-primary)", maxWidth: 1000 }}>
@@ -59,7 +110,7 @@ export default function Dashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 10, marginBottom: "1.25rem" }}>
         {[
           { label: "Overall progress",  value: `${pct}%`,    sub: `${doneTasks} of ${totalTasks} tasks complete` },
-          { label: "In progress",        value: PILLARS.reduce((a, p) => a + p.tasks.filter((t) => t.status === "In Progress").length, 0), sub: "active tasks" },
+          { label: "In progress",        value: pillars.reduce((a, p) => a + p.tasks.filter((t) => t.status === "In Progress").length, 0), sub: "active tasks" },
           { label: "At risk / blocked",  value: atRiskTasks,  sub: "need attention", warn: true },
           { label: "Open actions",       value: openActions,  sub: "require follow-up" },
         ].map((s) => (
@@ -108,7 +159,7 @@ export default function Dashboard() {
       {activeTab === "overview" && !activePillar && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 4px" }}>Select a workstream to drill into its tasks.</p>
-          {PILLARS.map((p) => {
+          {pillars.map((p) => {
             const done = p.tasks.filter((t) => t.status === "Complete").length;
             const risk = p.tasks.filter((t) => t.status === "At Risk" || t.status === "Blocked").length;
             const pctP = Math.round((done / p.tasks.length) * 100);
@@ -167,8 +218,34 @@ export default function Dashboard() {
                   {isOpen && (
                     <div style={{ padding: "0 16px 14px", borderTop: "0.5px solid var(--color-border-tertiary)" }}>
                       <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
-                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Owner: <strong style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{t.owner}</strong></div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Due: <strong style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{t.due}</strong></div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                          Owner:{" "}
+                          {editingField?.type === "task" && editingField.id === t.id && editingField.field === "owner" ? (
+                            <InlineEdit
+                              value={t.owner}
+                              onCommit={v => { updateTask(pillar.id, t.id, { owner: v }); setEditingField(null); }}
+                            />
+                          ) : (
+                            <strong
+                              style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }}
+                              onClick={e => { e.stopPropagation(); setEditingField({ type: "task", id: t.id, pillarId: pillar.id, field: "owner" }); }}
+                            >{t.owner}</strong>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                          Due:{" "}
+                          {editingField?.type === "task" && editingField.id === t.id && editingField.field === "due" ? (
+                            <InlineEdit
+                              value={t.due}
+                              onCommit={v => { updateTask(pillar.id, t.id, { due: v }); setEditingField(null); }}
+                            />
+                          ) : (
+                            <strong
+                              style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }}
+                              onClick={e => { e.stopPropagation(); setEditingField({ type: "task", id: t.id, pillarId: pillar.id, field: "due" }); }}
+                            >{t.due}</strong>
+                          )}
+                        </div>
                       </div>
                       <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "8px 0 0", lineHeight: 1.6 }}>{t.notes}</p>
                     </div>
@@ -182,21 +259,55 @@ export default function Dashboard() {
 
       {/* OPEN ACTIONS */}
       {activeTab === "actions" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 8px" }}>Items that need someone to move on them now.</p>
-          {ACTIONS.map((a, i) => {
-            const pc = prodColor[a.product] ?? prodColor["Both"];
-            const isUrgent = a.due === "ASAP" || a.due === "Today" || a.due === "Mar 26";
-            return (
-              <div key={a.id} style={{ background: "var(--color-background-primary)", border: `0.5px solid ${isUrgent ? "#FAC775" : "var(--color-border-tertiary)"}`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, fontWeight: 500, color: "var(--color-text-tertiary)", minWidth: 20 }}>{i + 1}</span>
-                <span style={{ background: pc.bg, color: pc.text, fontSize: 11, padding: "2px 8px", borderRadius: 20, fontWeight: 500, whiteSpace: "nowrap" }}>{a.product}</span>
-                <span style={{ flex: 1, fontSize: 13, minWidth: 160 }}>{a.task}</span>
-                <span style={{ fontSize: 12, color: "var(--color-text-secondary)", whiteSpace: "nowrap" }}>Owner: <strong style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{a.owner}</strong></span>
-                <span style={{ fontSize: 12, color: isUrgent ? "#854F0B" : "var(--color-text-secondary)", fontWeight: isUrgent ? 500 : 400, background: isUrgent ? "#FAEEDA" : "transparent", padding: isUrgent ? "2px 8px" : "0", borderRadius: isUrgent ? 20 : 0, whiteSpace: "nowrap" }}>{a.due}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 0" }}>Items that need someone to move on them now. Click owner or due date to edit.</p>
+          {groupedActions.map(group => (
+            <div key={group.status}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <Dot s={group.status} />
+                <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{group.items.length} item{group.items.length !== 1 ? "s" : ""}</span>
               </div>
-            );
-          })}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {group.items.map((a) => {
+                  const pc = prodColor[a.product] ?? prodColor["Both"];
+                  const isUrgent = a.due === "ASAP" || a.due === "Today" || a.due === "Mar 26";
+                  return (
+                    <div key={a.id} style={{ background: "var(--color-background-primary)", border: `0.5px solid ${isUrgent ? "#FAC775" : "var(--color-border-tertiary)"}`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <span style={{ background: pc.bg, color: pc.text, fontSize: 11, padding: "2px 8px", borderRadius: 20, fontWeight: 500, whiteSpace: "nowrap" }}>{a.product}</span>
+                      <span style={{ flex: 1, fontSize: 13, minWidth: 160 }}>{a.task}</span>
+                      <span style={{ fontSize: 12, color: "var(--color-text-secondary)", whiteSpace: "nowrap" }}>
+                        Owner:{" "}
+                        {editingField?.type === "action" && editingField.id === a.id && editingField.field === "owner" ? (
+                          <InlineEdit
+                            value={a.owner}
+                            onCommit={v => { updateAction(a.id, { owner: v }); setEditingField(null); }}
+                          />
+                        ) : (
+                          <strong
+                            style={{ fontWeight: 500, color: "var(--color-text-primary)", cursor: "text" }}
+                            onClick={() => setEditingField({ type: "action", id: a.id, field: "owner" })}
+                          >{a.owner}</strong>
+                        )}
+                      </span>
+                      <span style={{ fontSize: 12, color: isUrgent ? "#854F0B" : "var(--color-text-secondary)", whiteSpace: "nowrap" }}>
+                        {editingField?.type === "action" && editingField.id === a.id && editingField.field === "due" ? (
+                          <InlineEdit
+                            value={a.due}
+                            onCommit={v => { updateAction(a.id, { due: v }); setEditingField(null); }}
+                          />
+                        ) : (
+                          <strong
+                            style={{ fontWeight: isUrgent ? 500 : 400, color: isUrgent ? "#854F0B" : "var(--color-text-secondary)", background: isUrgent ? "#FAEEDA" : "transparent", padding: isUrgent ? "2px 8px" : "0", borderRadius: isUrgent ? 20 : 0, cursor: "text", display: "inline-block" }}
+                            onClick={() => setEditingField({ type: "action", id: a.id, field: "due" })}
+                          >{a.due}</strong>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

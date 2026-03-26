@@ -37,6 +37,7 @@ export interface Action {
   due: string;
   product: "AERO" | "IQ Series" | "Both";
   task: string;
+  status: StatusKey;
 }
 
 export const PILLARS: Pillar[] = [
@@ -136,14 +137,14 @@ export const PILLARS: Pillar[] = [
 ];
 
 export const ACTIONS: Action[] = [
-  { id: 1,  owner: "Tony Chen",         due: "ASAP",         product: "AERO",     task: "Confirm AERO launch date in market" },
-  { id: 2,  owner: "Tony Chen / Rod",   due: "Mar 26",       product: "AERO",     task: "Lock narrative direction at Thursday session — treat as final" },
-  { id: 3,  owner: "Emily Antner",      due: "Today",        product: "Both",     task: "Follow up on deeper AERO agent session — schedule for this week (Nick + Chelsea)" },
-  { id: 4,  owner: "Rod Paolucci",      due: "End of March", product: "AERO",     task: "Incorporate latest demo into GTM deck" },
-  { id: 5,  owner: "Rod Paolucci",      due: "End of March", product: "AERO",     task: "Clarify IQ Series vs AERO distinction in video" },
-  { id: 6,  owner: "Anudit / Venu",     due: "This week",    product: "AERO",     task: "Review competitor websites — identify what CF does that others don't" },
-  { id: 7,  owner: "Mike Gray / Tony",  due: "ASAP",         product: "AERO",     task: "Follow up on Mike Gray comprehensive competitive AI analysis" },
-  { id: 8,  owner: "Rod / Anudit",      due: "This week",    product: "AERO",     task: "Identify mockups for externally deployable agents (Brand Profile, List Building, Reporting)" },
-  { id: 9,  owner: "Anudit Vikram",     due: "~Mar 25",      product: "AERO",     task: "Complete Anudit pitch: IQ Series + AERO overview for agency/brand" },
-  { id: 10, owner: "David / Anudit",    due: "This week",    product: "Both",     task: "Brief Rod fully on Impact Score — major marketing opportunity" },
+  { id: 1,  owner: "Tony Chen",         due: "ASAP",         product: "AERO",     status: "Blocked",     task: "Confirm AERO launch date in market" },
+  { id: 2,  owner: "Tony Chen / Rod",   due: "Mar 26",       product: "AERO",     status: "In Progress", task: "Lock narrative direction at Thursday session — treat as final" },
+  { id: 3,  owner: "Emily Antner",      due: "Today",        product: "Both",     status: "At Risk",     task: "Follow up on deeper AERO agent session — schedule for this week (Nick + Chelsea)" },
+  { id: 4,  owner: "Rod Paolucci",      due: "End of March", product: "AERO",     status: "In Progress", task: "Incorporate latest demo into GTM deck" },
+  { id: 5,  owner: "Rod Paolucci",      due: "End of March", product: "AERO",     status: "In Progress", task: "Clarify IQ Series vs AERO distinction in video" },
+  { id: 6,  owner: "Anudit / Venu",     due: "This week",    product: "AERO",     status: "Not Started", task: "Review competitor websites — identify what CF does that others don't" },
+  { id: 7,  owner: "Mike Gray / Tony",  due: "ASAP",         product: "AERO",     status: "At Risk",     task: "Follow up on Mike Gray comprehensive competitive AI analysis" },
+  { id: 8,  owner: "Rod / Anudit",      due: "This week",    product: "AERO",     status: "Not Started", task: "Identify mockups for externally deployable agents (Brand Profile, List Building, Reporting)" },
+  { id: 9,  owner: "Anudit Vikram",     due: "~Mar 25",      product: "AERO",     status: "Not Started", task: "Complete Anudit pitch: IQ Series + AERO overview for agency/brand" },
+  { id: 10, owner: "David / Anudit",    due: "This week",    product: "Both",     status: "Not Started", task: "Brief Rod fully on Impact Score — major marketing opportunity" },
 ];
